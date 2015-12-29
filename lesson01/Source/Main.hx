@@ -1,5 +1,7 @@
 package;
 
+import openfl.geom.Point;
+import openfl.geom.PerspectiveProjection;
 import openfl.geom.Vector3D;
 import flash.errors.Error;
 import openfl.display.OpenGLView;
@@ -41,8 +43,7 @@ class Main extends Sprite {
 
         // This is too early to clear in OpenFL
         //gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        //GL.clearColor (0.0, 0.0, 0.0, 1.0);
-
+        GL.clearColor (0.0, 0.0, 0.0, 1.0);
         //gl.enable(gl.DEPTH_TEST);
         GL.enable (GL.DEPTH_TEST);
 
@@ -170,33 +171,28 @@ class Main extends Sprite {
 
     //var mvMatrix = mat4.create();
     //var pMatrix = mat4.create();
-
-    //var mvMatrix = Matrix3D.createABCD().
     private function renderView (rect:Rectangle):Void {
-
-        //gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        GL.viewport (Std.int (rect.x), Std.int (rect.y), Std.int (rect.width), Std.int (rect.height));
-        //GL.enable (GL.DEPTH_TEST);
-        GL.clearColor (0.0, 0.0, 0.0, 1.0);
-        GL.clear (GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
-
-        // Todo(Hays) From OpenFL
-        var projectionMatrix = Matrix3D.createOrtho (0, rect.width, 0, rect.height, 1000, -1000);
-        //mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
-
-        // center and zoom matrix
-        var positionX = (rect.width) / 2;
-        var positionY = (rect.height) / 2;
-        var modelViewMatrix = Matrix3D.create2D (positionX, positionY, 75, 0);
-
         GL.useProgram (shaderProgram);
         GL.enableVertexAttribArray (vertexAttribute);
 
+        GL.clearColor (0.0, 0.0, 0.0, 1.0);
+
+        //GL.enable (GL.DEPTH_TEST);
+        var modelViewMatrix = Matrix3D.create2D (0, 0, 1, 0);
+
+        //gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+        GL.viewport (Std.int (rect.x), Std.int (rect.y), Std.int (rect.width), Std.int (rect.height));
+
+        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        GL.clear (GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT);
+
         //mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+        var projectionMatrix = makePerspective(45, (rect.width/rect.height), 0.1, 100.0);
         //mat4.identity(mvMatrix);
+
         // move all items to center of viewport
         //mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
-        modelViewMatrix.position = modelViewMatrix.position.add(new Vector3D(-105, 0.0, -7.0));
+        modelViewMatrix.position = modelViewMatrix.position.add(new Vector3D(-1.5, 0.0, -7.0));
 
         //gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
         //gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -213,7 +209,7 @@ class Main extends Sprite {
         GL.drawArrays (GL.TRIANGLE_STRIP, 0, 3);
 
         //mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
-        modelViewMatrix.position = modelViewMatrix.position.add(new Vector3D(200.0, 0.0, 0.0));
+        modelViewMatrix.position = modelViewMatrix.position.add(new Vector3D(3, 0.0, 0.0));
 
         //gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
         //gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
@@ -236,4 +232,15 @@ class Main extends Sprite {
         GL.useProgram (null);
     }
 
+    private function makePerspective(fieldOfViewInRadians:Float, aspect:Float, near:Float, far:Float) {
+        var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
+        var rangeInv = 1.0 / (near - far);
+
+        return new Matrix3D([
+            f / aspect, 0.0, 0.0, 0.0,
+            0.0, f, 0.0, 0.0,
+            0.0, 0.0, (near + far) * rangeInv, -1.0,
+            0.0, 0.0, near * far * rangeInv * 2, 0.0]
+        );
+    }
 }
